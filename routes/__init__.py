@@ -1,5 +1,5 @@
-from .lint_chart import lint_chart_bp
-from .analyze_log import analyze_log_bp
+from .lint_chart import bp as lint_chart_bp
+from .analyze_log import bp as analyze_log_bp
 # from .generate_pipeline import generate_pipeline_bp  # cuando lo tengas
 
 def register_routes(app):
