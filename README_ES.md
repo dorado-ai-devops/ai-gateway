@@ -1,4 +1,3 @@
-
 # 🔁 ai-gateway
 
 > Microservicio Flask que actúa como gateway inteligente entre Jenkins, los microservicios IA (`ai-logs-analyze`, `ai-helm-linter`, `ai-pipeline-gen`) y los modelos LLM locales (Ollama) o remotos (OpenAI). Este componente organiza el flujo de información, dirige las peticiones y establece fallback entre motores de IA.
@@ -38,13 +37,11 @@ Analiza registros CI/CD con LLMs.
 
 Valida un Helm Chart mediante IA.
 
-**Payload:**
-```json
-{
-  "chart_path": "./charts/myservice",
-  "ruleset": "default"
-}
-```
+**Payload (multipart/form-data):**
+
+- `chart`: archivo `.tgz` del Helm Chart
+- `mode`: `"ollama"` o `"openai"`
+- `ruleset`: `"default"` (opcional)
 
 → Redirige a `ai-helm-linter`.
 
@@ -125,9 +122,7 @@ def jsonPayload = '''
 '''
 
 sh '''
-curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipeline \
-  -H "Content-Type: application/json" \
-  -d '${jsonPayload}'
+curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipeline   -H "Content-Type: application/json"   -d '${jsonPayload}'
 '''
 ```
 

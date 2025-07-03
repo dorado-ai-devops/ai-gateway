@@ -1,16 +1,16 @@
 # 🔁 ai-gateway
 
-> Flask microservice acting as an intelligent gateway between Jenkins, AI microservices (`ai-logs-analyze`, `ai-helm-linter`, `ai-pipeline-gen`), and local (Ollama) or remote (OpenAI) LLMs. This component organizes the information flow, routes requests, and manages fallback between AI engines.
+> Flask microservice acting as an intelligent gateway between Jenkins, AI microservices (`ai-logs-analyze`, `ai-helm-linter`, `ai-pipeline-gen`), and LLM engines, either local (Ollama) or remote (OpenAI). It orchestrates the flow of information, dispatches requests, and establishes fallbacks between AI engines.
 
 ---
 
 ## 🚪 Main Function
 
-Centralizes Jenkins requests and dispatches them to the AI microservices inside `DEVOPS-AI-LAB`, using language models (LLMs) for:
+Centralizes Jenkins requests and delegates them to the corresponding AI microservices within the `DEVOPS-AI-LAB` environment, leveraging LLMs to:
 
-- 📊 Log analysis
-- 🧪 Helm Charts validation and linting
-- ⚙️ Automatic CI/CD pipeline generation from natural language
+- 📊 Analyze logs
+- 🧪 Validate and lint Helm Charts
+- ⚙️ Generate CI/CD pipelines from natural language
 
 ---
 
@@ -29,21 +29,18 @@ Analyzes CI/CD logs using LLMs.
 }
 ```
 
-→ Internally redirects to `ai-logs-analyze` microservice.
+→ Internally forwards to the `ai-logs-analyze` microservice.
 
 ---
 
 ### `POST /lint-chart`
 
-Validates a Helm Chart via AI.
+Validates a Helm Chart using AI.
 
-**Payload:**
-```json
-{
-  "chart_path": "./charts/myservice",
-  "ruleset": "default"
-}
-```
+**Payload (multipart/form-data):**
+- `chart`: Helm `.tgz` file
+- `mode`: `"ollama"` or `"openai"`
+- `ruleset`: `"default"` (optional)
 
 → Redirects to `ai-helm-linter`.
 
@@ -56,7 +53,7 @@ Converts natural language into a CI/CD pipeline definition.
 **Payload:**
 ```json
 {
-  "description": "Create a pipeline to build, test, and deploy to Kubernetes with Helm",
+  "description": "Create a pipeline that builds, tests and deploys to Kubernetes using Helm",
   "target": "jenkins"
 }
 ```
@@ -68,15 +65,15 @@ Converts natural language into a CI/CD pipeline definition.
 ### `GET /health`
 
 Response: `200 OK`  
-Used to verify that the gateway is running.
+Checks if the gateway is running.
 
 ---
 
 ## 🧠 Adaptive Intelligence
 
-- Defaults to **local models via Ollama** (e.g., Mistral 7b)
-- If Ollama fails, automatically falls back to **OpenAI GPT-4o** (if configured)
-- All routing, fallback logic, and auth is managed by `ai-gateway`
+- Defaults to **local Ollama models** (e.g., Mistral 7b)
+- Automatically falls back to **OpenAI GPT-4o** (if configured)
+- All routing, fallback and coordination logic is managed in `ai-gateway`
 
 ---
 
@@ -85,15 +82,15 @@ Used to verify that the gateway is running.
 ```
 ai-gateway/
 ├── app.py                 # Flask server with all endpoints
-├── routes/                # Endpoint-specific logic modules
+├── routes/                # Endpoint-specific modules
 │   ├── analyze_log.py
 │   ├── lint_chart.py
 │   └── generate_pipeline.py
-├── clients/               # Microservices and model clients
+├── clients/               # Interfaces to microservices and models
 │   ├── ollama_client.py
 │   ├── openai_client.py
 │   └── service_dispatcher.py
-├── config/                # Parameters, paths, fallback logic
+├── config/                # Parameters, paths, fallbacks
 ├── requirements.txt
 └── Dockerfile
 ```
@@ -113,12 +110,12 @@ python3 app.py
 
 ## 🧩 Jenkins Integration
 
-You can call the gateway directly from Jenkins to dispatch tasks:
+From Jenkins you can directly trigger AI-powered tasks via the gateway:
 
 ```groovy
 def jsonPayload = '''
 {
-  "description": "I want a pipeline for test + deploy on K8s",
+  "description": "Build + deploy to K8s pipeline",
   "target": "jenkins"
 }
 '''
@@ -132,26 +129,26 @@ curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipelin
 
 ## 🧠 System Role
 
-- Serves as the unique entry point to the AI backend
-- Deployed as a Flask microservice in Kubernetes
-- Fully managed by ArgoCD using GitOps manifests
-- Requires `ai-logs-analyze`, `ai-helm-linter`, and `ai-pipeline-gen` services deployed
+- Single entry point to the AI backend
+- Will be deployed as a Flask microservice in Kubernetes
+- Managed via GitOps using ArgoCD
+- Requires pre-deployment of `ai-logs-analyze`, `ai-helm-linter` and `ai-pipeline-gen`
 
 ---
 
 ## 🔒 Future Security
 
-- Token-based auth for public exposure
+- Token-based authentication (optional)
 - Input validation and sanitization
 - Structured logging with adjustable verbosity
 
 ---
 
-## 🔮 Future Modules
+## 🔮 Potential Future Modules
 
-- `/explain-error`: analyze tracebacks or errors and return explanations
-- `/summarize-pipeline`: summarize CI/CD for auditing
-- `/compare-logs`: diff logs between two executions
+- `/explain-error`: explain tracebacks or error messages
+- `/summarize-pipeline`: CI/CD summary for auditing
+- `/compare-logs`: log diffing across executions
 
 ---
 
