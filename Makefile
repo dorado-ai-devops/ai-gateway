@@ -1,5 +1,5 @@
 IMAGE_NAME=ai-gateway
-VERSION=v0.1.1
+VERSION=v0.1.2
 CLUSTER_NAME=devops-ai
 REGISTRY=localhost:5000
 HELM_VALUES=../devops-ai-lab/manifests/helm-gateway/values.yaml
@@ -10,7 +10,7 @@ ARGO_APP_NAME=ai-gateway
 all: build load
 
 build:
-	docker build -t $(IMAGE_NAME):$(VERSION) .
+	docker build --no-cache -t $(IMAGE_NAME):$(VERSION) .
 
 tag:
 	docker tag $(IMAGE_NAME):$(VERSION) $(REGISTRY)/$(IMAGE_NAME):$(VERSION)
