@@ -2,7 +2,7 @@ IMAGE_NAME=ai-gateway
 VERSION=v0.1.0
 CLUSTER_NAME=devops-ai
 REGISTRY=localhost:5000
-HELM_VALUES=../devops-ai-lab/manifests/helm-ai-gateway/values.yaml
+HELM_VALUES=../devops-ai-lab/manifests/helm-gateway/values.yaml
 ARGO_APP_NAME=ai-gateway
 
 .PHONY: all build tag push load update-values sync release run
