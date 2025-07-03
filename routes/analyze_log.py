@@ -4,7 +4,7 @@ import os
 
 analyze_log_bp = Blueprint('analyze_log', __name__)
 
-LOG_ANALYZER_URL = os.getenv("LOG_ANALYZER_URL", "http://ai-log-analyzer.devops-ai.svc.cluster.local:5000/analyze")
+LOG_ANALYZER_URL = os.getenv("LOG_ANALYZER_URL", "http://ai-log-analyzer.devops-ai.svc.cluster.local:80/analyze")
 
 @analyze_log_bp.route('/analyze-log', methods=['POST'])
 def analyze_log():

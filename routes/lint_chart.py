@@ -4,7 +4,7 @@ import os
 
 lint_chart_bp = Blueprint('lint_chart', __name__)
 
-HELM_LINTER_URL = os.getenv("HELM_LINTER_URL", "http://ai-helm-linter.devops-ai.svc.cluster.local:5000/lint-chart")
+HELM_LINTER_URL = os.getenv("HELM_LINTER_URL", "http://ai-helm-linter.devops-ai.svc.cluster.local:80/lint-chart")
 
 @lint_chart_bp.route('/lint-chart', methods=['POST'])
 def lint_chart():
