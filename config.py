@@ -10,5 +10,5 @@ SERVICES = {
 }
 
 # Configuraciones globales
-TIMEOUT = int(os.getenv("GATEWAY_TIMEOUT", 20))
+TIMEOUT = int(os.getenv("GATEWAY_TIMEOUT", 300))
 DEBUG = os.getenv("GATEWAY_DEBUG", "false").lower() == "true"
