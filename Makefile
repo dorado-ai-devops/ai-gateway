@@ -1,5 +1,5 @@
 IMAGE_NAME=ai-gateway
-VERSION=v0.1.4
+VERSION=v0.1.5
 CLUSTER_NAME=devops-ai
 REGISTRY=localhost:5000
 HELM_VALUES=../devops-ai-lab/manifests/helm-gateway/values.yaml
