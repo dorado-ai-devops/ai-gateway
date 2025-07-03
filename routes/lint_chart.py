@@ -1,21 +1,38 @@
+# routes/lint_chart.py
+
 from flask import Blueprint, request, jsonify
 import requests
-import os
+from config import SERVICES, TIMEOUT
 
-lint_chart_bp = Blueprint('lint_chart', __name__)
+bp = Blueprint('lint_chart', __name__)
 
-HELM_LINTER_URL = os.getenv("HELM_LINTER_URL", "http://helm-linter-service.devops-ai.svc.cluster.local:80/lint-chart")
-
-@lint_chart_bp.route('/lint-chart', methods=['POST'])
+@bp.route('/lint-chart', methods=['POST'])
 def lint_chart():
-    if not request.is_json:
-        return jsonify({"error": "El cuerpo debe ser JSON"}), 400
+    if 'chart' not in request.files or 'mode' not in request.form:
+        return jsonify({'error': "Faltan campos requeridos: 'chart' (archivo) y 'mode' (texto)"}), 400
 
-    payload = request.get_json()
+    chart_file = request.files['chart']
+    mode = request.form['mode']
+    ruleset = request.form.get('ruleset', 'default')
 
     try:
-        response = requests.post(HELM_LINTER_URL, json=payload)
+        files = {'chart': (chart_file.filename, chart_file.stream, chart_file.mimetype)}
+        data = {
+            'mode': mode,
+            'ruleset': ruleset
+        }
+
+        response = requests.post(
+            SERVICES["lint_chart"],
+            files=files,
+            data=data,
+            timeout=TIMEOUT
+        )
         response.raise_for_status()
-        return jsonify(response.json()), response.status_code
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": "Error al contactar con ai-helm-linter", "details": str(e)}), 502
+        return response.json()
+
+    except requests.RequestException as e:
+        return jsonify({
+            'error': 'Error al contactar con ai-helm-linter',
+            'details': str(e)
+        }), 500
