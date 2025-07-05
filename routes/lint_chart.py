@@ -7,29 +7,29 @@ bp = Blueprint('lint_chart', __name__)
 
 @bp.route('/lint-chart', methods=['POST'])
 def lint_chart():
-    if not request.is_json:
-        return jsonify({"error": "El cuerpo debe ser JSON"}), 400
+    if 'chart' not in request.files:
+        return jsonify({"error": "Falta el archivo 'chart' (.tgz)"}), 400
 
-    payload = request.get_json()
-    chart_path = payload.get("chart_path", "")
-    if not chart_path:
-        return jsonify({"error": "Falta el campo 'chart_path'"}), 400
-
-    mode = payload.get("mode", "ollama")
+    chart_file = request.files['chart']
+    mode = request.form.get("mode", "ollama")
 
     # 🕒 Timestamp único con zona horaria UTC
     ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     base_filename = f"chart_{ts}"
-    prompt_path = f"/app/outputs/charts/{base_filename}.path"
-    response_path = f"/app/outputs/charts/{base_filename}.lint"
+    save_dir = "/app/outputs/charts"
+    os.makedirs(save_dir, exist_ok=True)
 
-    # 💾 Guardar ruta del chart como pseudo-prompt
+    chart_path = os.path.join(save_dir, f"{base_filename}.tgz")
+    prompt_path = os.path.join(save_dir, f"{base_filename}.path")
+    response_path = os.path.join(save_dir, f"{base_filename}.lint")
+
+    # 💾 Guardar el archivo del Chart
     try:
-        os.makedirs(os.path.dirname(prompt_path), exist_ok=True)
+        chart_file.save(chart_path)
         with open(prompt_path, "w") as f:
             f.write(chart_path)
     except Exception as e:
-        return jsonify({"error": f"No se pudo guardar el path del Chart: {e}"}), 500
+        return jsonify({"error": f"No se pudo guardar el Chart: {e}"}), 500
 
     forwarded_payload = {
         "chart_path": chart_path,
