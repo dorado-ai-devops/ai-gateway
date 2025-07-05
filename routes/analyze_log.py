@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
-import requests
-from config import SERVICES, TIMEOUT
+from clients.service_dispatcher import dispatch  # ✅ Uso del dispatcher común
 
 bp = Blueprint('analyze_log', __name__)
 
@@ -10,12 +9,10 @@ def analyze_log():
         return jsonify({"error": "El cuerpo debe ser JSON"}), 400
 
     payload = request.get_json()
-
     log = payload.get("log", "")
     if not log:
         return jsonify({"error": "Falta el campo 'log'"}), 400
 
-    # Inyectar 'mode' si no viene en el payload
     mode = payload.get("mode", "ollama")
 
     forwarded_payload = {
@@ -23,15 +20,20 @@ def analyze_log():
         "mode": mode
     }
 
+    prompt_path = payload.get("prompt_path")
+    response_path = payload.get("response_path")
+    llm_used = mode
+
     try:
-        response = requests.post(
-            SERVICES["analyze_log"],
-            json=forwarded_payload,
-            timeout=TIMEOUT
+        result = dispatch(
+            service_name="analyze_log",
+            payload=forwarded_payload,
+            prompt_path=prompt_path,
+            response_path=response_path,
+            llm_used=llm_used
         )
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return result
+    except Exception as e:
         return jsonify({
             "error": "Error al contactar con ai-log-analyzer",
             "details": str(e)

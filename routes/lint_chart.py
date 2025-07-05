@@ -1,38 +1,39 @@
-# routes/lint_chart.py
-
 from flask import Blueprint, request, jsonify
-import requests
-from config import SERVICES, TIMEOUT
+from clients.service_dispatcher import dispatch  # ✅ Nuevo import
 
 bp = Blueprint('lint_chart', __name__)
 
 @bp.route('/lint-chart', methods=['POST'])
 def lint_chart():
-    if 'chart' not in request.files or 'mode' not in request.form:
-        return jsonify({'error': "Faltan campos requeridos: 'chart' (archivo) y 'mode' (texto)"}), 400
+    if not request.is_json:
+        return jsonify({"error": "El cuerpo debe ser JSON"}), 400
 
-    chart_file = request.files['chart']
-    mode = request.form['mode']
-    ruleset = request.form.get('ruleset', 'default')
+    payload = request.get_json()
+
+    chart_path = payload.get("chart_path", "")
+    if not chart_path:
+        return jsonify({"error": "Falta el campo 'chart_path'"}), 400
+
+    forwarded_payload = {
+        "chart_path": chart_path,
+        "mode": payload.get("mode", "ollama")
+    }
+
+    prompt_path = payload.get("prompt_path")
+    response_path = payload.get("response_path")
+    llm_used = payload.get("mode", "ollama")
 
     try:
-        files = {'chart': (chart_file.filename, chart_file.stream, chart_file.mimetype)}
-        data = {
-            'mode': mode,
-            'ruleset': ruleset
-        }
-
-        response = requests.post(
-            SERVICES["lint_chart"],
-            files=files,
-            data=data,
-            timeout=TIMEOUT
+        result = dispatch(
+            service_name="lint_chart",
+            payload=forwarded_payload,
+            prompt_path=prompt_path,
+            response_path=response_path,
+            llm_used=llm_used
         )
-        response.raise_for_status()
-        return response.json()
-
-    except requests.RequestException as e:
+        return result
+    except Exception as e:
         return jsonify({
-            'error': 'Error al contactar con ai-helm-linter',
-            'details': str(e)
-        }), 500
+            "error": "Error al contactar con ai-helm-linter",
+            "details": str(e)
+        }), 502

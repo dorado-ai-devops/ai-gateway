@@ -1,15 +1,15 @@
 # 🔁 ai-gateway
 
-> Flask microservice acting as an intelligent gateway between Jenkins, DevOps AI microservices (`ai-logs-analyze`, `ai-helm-linter`, `ai-pipeline-gen`), and local (Ollama) or remote (OpenAI) LLMs. This component organizes the flow of information, dispatches requests, and establishes fallback between AI engines.
+> Flask microservice that acts as an intelligent gateway between Jenkins, AI microservices (`ai-log-analyzer`, `ai-helm-linter`, `ai-pipeline-gen`), and local (Ollama) or remote (OpenAI) LLMs. This component orchestrates request routing, fallback handling, and MCP message generation.
 
 ---
 
-## 🚪 Main Function
+## 🚪 Main Purpose
 
-Centralizes Jenkins calls and dispatches them to AI microservices in the `DEVOPS-AI-LAB` environment, using LLM backends for:
+Centralizes Jenkins calls and dispatches requests to AI services within the `devops-ai-lab` environment, leveraging LLMs for:
 
 - 📊 Log analysis
-- 🧪 Helm Chart linting and validation
+- 🧪 Helm Chart validation
 - ⚙️ CI/CD pipeline generation from natural language
 
 ---
@@ -28,53 +28,42 @@ Analyzes CI/CD logs using LLMs.
   "prompt_template": "log_analysis"
 }
 ```
-
-→ Internally redirects to `ai-logs-analyze`.
+→ Internally forwarded to `ai-log-analyzer`.
 
 ---
 
 ### `POST /lint-chart`
 
-Validates a Helm Chart via LLM.
+Audits a Helm Chart using AI.
 
 **Payload (multipart/form-data):**
-
-- `chart`: `.tgz` Helm Chart archive
+- `chart`: `.tgz` archive of the Helm Chart
 - `mode`: `"ollama"` or `"openai"`
 - `ruleset`: `"default"` (optional)
 
-→ Redirects to `ai-helm-linter`.
+→ Forwards to `ai-helm-linter`.
 
 ---
 
 ### `POST /generate-pipeline`
 
-Converts natural language into a CI/CD pipeline definition.
+Generates a CI/CD pipeline definition from natural language.
 
 **Payload:**
 ```json
 {
-  "description": "Create a pipeline that builds, tests, and deploys to Kubernetes using Helm",
+  "description": "Pipeline with test and Helm deploy",
   "target": "jenkins"
 }
 ```
-
-→ Sends request to `ai-pipeline-gen`.
+→ Forwards to `ai-pipeline-gen`.
 
 ---
 
 ### `GET /health`
 
 Response: `200 OK`  
-Used to check gateway health status.
-
----
-
-## 🧠 Adaptive Intelligence
-
-- Uses **local Ollama models** by default (e.g., Mistral 7b)
-- Automatically falls back to **OpenAI GPT-4o** if Ollama fails
-- All routing, dispatch and fallback logic lives within `ai-gateway`
+Used to verify the gateway is live.
 
 ---
 
@@ -82,23 +71,24 @@ Used to check gateway health status.
 
 ```
 ai-gateway/
-├── app.py                 # Flask server with all endpoints
-├── routes/                # Endpoint-specific modules
+├── app.py                 # Main Flask server
+├── routes/                # Endpoint definitions
 │   ├── analyze_log.py
 │   ├── lint_chart.py
 │   └── generate_pipeline.py
-├── clients/               # Connections to services and models
-│   ├── ollama_client.py
-│   ├── openai_client.py
-│   └── service_dispatcher.py
-├── config/                # Configs, paths, fallbacks
-├── requirements.txt
-└── Dockerfile
+├── clients/               # Microservice dispatchers
+│   ├── service_dispatcher.py
+│   └── mcp_client.py
+├── config.py              # Service URLs, timeout, default LLM
+├── requirements.txt       # Python dependencies
+├── Makefile               # Build and deployment automation
+├── Dockerfile             # Container image
+└── run_*.sh               # Local test scripts
 ```
 
 ---
 
-## ⚙️ Running the App
+## ⚙️ Local Execution
 
 ```bash
 python3 -m venv venv
@@ -109,47 +99,56 @@ python3 app.py
 
 ---
 
-## 🔗 Jenkins Integration
-
-Jenkins pipelines can call the gateway directly:
+## 🔁 Jenkins Integration Example
 
 ```groovy
 def jsonPayload = '''
 {
-  "description": "Generate pipeline for testing + deployment in K8s",
+  "description": "Basic test and deploy pipeline",
   "target": "jenkins"
 }
 '''
 
 sh '''
-curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipeline   -H "Content-Type: application/json"   -d '${jsonPayload}'
+curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipeline \
+     -H "Content-Type: application/json" \
+     -d '${jsonPayload}'
 '''
 ```
 
 ---
 
-## 🧠 System Role
+## 🧠 Adaptive Intelligence
 
-- Acts as the unified entry point to the AI backend
-- Deployable as a Flask microservice in Kubernetes
-- Managed by ArgoCD with GitOps manifests
-- Requires `ai-logs-analyze`, `ai-helm-linter`, and `ai-pipeline-gen` deployed beforehand
-
----
-
-## 🔒 Security Roadmap
-
-- Token-based authentication (if public)
-- Input validation and sanitization
-- Structured logging with adjustable verbosity
+- Tries **local Ollama (Mistral)** model first
+- Falls back to **OpenAI GPT-4o** if needed
+- Behavior controlled via `service_dispatcher.py`
 
 ---
 
-## 🔮 Possible Future Modules
+## 📥 MCP Logging
 
-- `/explain-error`: AI explanation of tracebacks or technical errors
-- `/summarize-pipeline`: Pipeline summaries for audits
-- `/compare-logs`: Log diffs between two runs
+On successful LLM dispatch (with `prompt_path` and `response_path`), the gateway:
+
+- Sends a structured **MCP message** to `ai-mcp-server`
+- Logs source (`ai-gateway`), type, microservice, summary, and tags
+- Useful for observability and audit trails
+
+---
+
+## 🔐 Security & Next Steps
+
+- Token-based authentication (planned)
+- Input validation & sanitization in place
+- Structured logging (WIP)
+
+---
+
+## 🔮 Planned Modules
+
+- `/explain-error`: traceback analysis
+- `/summarize-pipeline`: CI/CD definition summarizer
+- `/compare-logs`: diffing log sequences
 
 ---
 
