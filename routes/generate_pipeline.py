@@ -1,11 +1,9 @@
-# routes/generate_pipeline.py
-
 from flask import Blueprint, request, jsonify
 from clients.service_dispatcher import dispatch
 
 bp = Blueprint('generate_pipeline', __name__)
 
-@bp.route('/', methods=['POST'])
+@bp.route('/generate', methods=['POST'])
 def generate_pipeline():
     try:
         data = request.get_json(force=True)
