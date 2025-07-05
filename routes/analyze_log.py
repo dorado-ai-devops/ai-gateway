@@ -11,10 +11,22 @@ def analyze_log():
 
     payload = request.get_json()
 
+    log = payload.get("log", "")
+    if not log:
+        return jsonify({"error": "Falta el campo 'log'"}), 400
+
+    # Inyectar 'mode' si no viene en el payload
+    mode = payload.get("mode", "ollama")
+
+    forwarded_payload = {
+        "log": log,
+        "mode": mode
+    }
+
     try:
         response = requests.post(
             SERVICES["analyze_log"],
-            json=payload,
+            json=forwarded_payload,
             timeout=TIMEOUT
         )
         response.raise_for_status()
