@@ -28,7 +28,7 @@ sync:
 	argocd app sync $(ARGO_APP_NAME)
 
 release: build load update-values sync
-	@echo "✅ Release completo: $(IMAGE_NAME):$(VERSION) desplegado y sincronizado con ArgoCD."
+	@echo "Release completo: $(IMAGE_NAME):$(VERSION) desplegado y sincronizado con ArgoCD."
 
 run:
 	docker run -p 5000:5000 $(IMAGE_NAME):$(VERSION)
