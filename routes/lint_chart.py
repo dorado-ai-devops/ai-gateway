@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from clients.service_dispatcher import dispatch
 import os
 from datetime import datetime, timezone
+import tempfile
 
 bp = Blueprint('lint_chart', __name__)
 
@@ -19,17 +20,20 @@ def lint_chart():
     save_dir = "/app/outputs/charts"
     os.makedirs(save_dir, exist_ok=True)
 
-    chart_path = os.path.join(save_dir, f"{base_filename}.tgz")
+    # ⚠️ Guardamos el .tgz temporalmente solo para el análisis
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".tgz") as tmp:
+        chart_file.save(tmp.name)
+        chart_path = tmp.name
+
     prompt_path = os.path.join(save_dir, f"{base_filename}.path")
     response_path = os.path.join(save_dir, f"{base_filename}.lint")
 
-    # 💾 Guardar el archivo del Chart
+    # 📝 Guardamos el path original del chart como referencia simbólica
     try:
-        chart_file.save(chart_path)
         with open(prompt_path, "w") as f:
             f.write(chart_path)
     except Exception as e:
-        return jsonify({"error": f"No se pudo guardar el Chart: {e}"}), 500
+        return jsonify({"error": f"No se pudo guardar el archivo .path: {e}"}), 500
 
     forwarded_payload = {
         "chart_path": chart_path,
@@ -44,9 +48,25 @@ def lint_chart():
             response_path=response_path,
             llm_used=mode
         )
+
+        # 💾 Guardamos la respuesta del microservicio como .lint
+        try:
+            with open(response_path, "w") as f:
+                f.write(str(result))
+        except Exception as e:
+            return jsonify({"error": f"No se pudo guardar el resultado .lint: {e}"}), 500
+
         return result
+
     except Exception as e:
         return jsonify({
             "error": "Error al contactar con ai-helm-linter",
             "details": str(e)
         }), 502
+
+    finally:
+        # 🧹 Eliminamos el .tgz temporal
+        try:
+            os.remove(chart_path)
+        except Exception:
+            pass  # No es crítico si falla
