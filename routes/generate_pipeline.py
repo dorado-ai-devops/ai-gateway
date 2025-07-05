@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from clients.service_dispatcher import dispatch
 import os
-from datetime import datetime, timezone  # ✅ Añadido timezone
+from datetime import datetime, timezone
 
 bp = Blueprint('generate_pipeline', __name__)
 
@@ -18,13 +18,11 @@ def generate_pipeline():
 
     mode = payload.get("mode", "ollama")
 
-    # ✅ Timestamp con zona horaria UTC
     ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     base_filename = f"pipeline_{ts}"
     prompt_path = f"/app/outputs/pipelines/{base_filename}.prompt"
     response_path = f"/app/outputs/pipelines/{base_filename}.jenkinsfile"
 
-    # 💾 Guardar prompt (descripción)
     try:
         os.makedirs(os.path.dirname(prompt_path), exist_ok=True)
         with open(prompt_path, "w") as f:
@@ -32,7 +30,6 @@ def generate_pipeline():
     except Exception as e:
         return jsonify({"error": f"No se pudo guardar el prompt: {e}"}), 500
 
-    # 🔁 Payload para el microservicio real
     forwarded_payload = {
         "description": description,
         "mode": mode
@@ -46,7 +43,13 @@ def generate_pipeline():
             response_path=response_path,
             llm_used=mode
         )
-        return result
+
+        # 💾 Guardar resultado en response_path
+        os.makedirs(os.path.dirname(response_path), exist_ok=True)
+        with open(response_path, "w") as f:
+            f.write(result if isinstance(result, str) else str(result))
+
+        return jsonify({"result": result})
     except Exception as e:
         return jsonify({
             "error": "Error al contactar con ai-pipeline-gen",
