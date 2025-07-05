@@ -1,0 +1,1 @@
+[2025-07-05T11:32:00] ERROR: Jenkins pipeline failed at stage 'build'
