@@ -13,7 +13,7 @@ def generate_pipeline():
         if 'description' not in data or 'target' not in data:
             return jsonify({'error': 'Campos "description" y "target" requeridos'}), 400
 
-        result = dispatch('pipeline', data)
+        result = dispatch('generate_pipeline', data)
         return jsonify(result)
 
     except Exception as e:
