@@ -3,6 +3,7 @@ from clients.service_dispatcher import dispatch
 import os
 from datetime import datetime, timezone
 import tempfile
+import json
 
 bp = Blueprint('lint_chart', __name__)
 
@@ -13,6 +14,7 @@ def lint_chart():
 
     chart_file = request.files['chart']
     mode = request.form.get("mode", "ollama")
+    chart_name = request.form.get("chart_name", "unknown")
 
     # 🕒 Timestamp único con zona horaria UTC
     ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
@@ -20,20 +22,24 @@ def lint_chart():
     save_dir = "/app/outputs/charts"
     os.makedirs(save_dir, exist_ok=True)
 
-    # ⚠️ Guardamos el .tgz temporalmente solo para el análisis
+    # ⚠️ Guardar .tgz temporal para procesar
     with tempfile.NamedTemporaryFile(delete=False, suffix=".tgz") as tmp:
         chart_file.save(tmp.name)
         chart_path = tmp.name
 
-    prompt_path = os.path.join(save_dir, f"{base_filename}.path")
+    prompt_path = os.path.join(save_dir, f"{base_filename}.path.json")
     response_path = os.path.join(save_dir, f"{base_filename}.lint")
 
-    # 📝 Guardamos el path original del chart como referencia simbólica
+    # 📝 Guardar metadata como .json
     try:
+        metadata = {
+            "chart_name": chart_name,
+            "chart_temp_path": chart_path
+        }
         with open(prompt_path, "w") as f:
-            f.write(chart_path)
+            json.dump(metadata, f, indent=2)
     except Exception as e:
-        return jsonify({"error": f"No se pudo guardar el archivo .path: {e}"}), 500
+        return jsonify({"error": f"No se pudo guardar el archivo .path.json: {e}"}), 500
 
     forwarded_payload = {
         "chart_path": chart_path,
@@ -49,7 +55,6 @@ def lint_chart():
             llm_used=mode
         )
 
-        # 💾 Guardamos la respuesta del microservicio como .lint
         try:
             with open(response_path, "w") as f:
                 f.write(str(result))
@@ -65,8 +70,8 @@ def lint_chart():
         }), 502
 
     finally:
-        # 🧹 Eliminamos el .tgz temporal
+        # 🧹 Eliminar el .tgz temporal
         try:
             os.remove(chart_path)
         except Exception:
-            pass  # No es crítico si falla
+            pass
