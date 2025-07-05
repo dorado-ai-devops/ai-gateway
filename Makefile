@@ -1,5 +1,5 @@
 IMAGE_NAME=ai-gateway
-VERSION=v0.1.16
+VERSION=v0.1.17
 CLUSTER_NAME=devops-ai
 REGISTRY=localhost:5000
 HELM_VALUES=../devops-ai-lab/manifests/helm-gateway/values.yaml
@@ -28,7 +28,7 @@ sync:
 	argocd app sync $(ARGO_APP_NAME)
 
 release: build load update-values sync
-	@echo "✅ Release completo: $(IMAGE_NAME):$(VERSION) desplegado y sincronizado con ArgoCD."
+	@echo "Release completo: $(IMAGE_NAME):$(VERSION) desplegado y sincronizado con ArgoCD."
 
 run:
 	docker run -p 5000:5000 $(IMAGE_NAME):$(VERSION)

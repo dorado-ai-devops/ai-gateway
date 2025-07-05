@@ -11,6 +11,7 @@ Centraliza las llamadas desde Jenkins y despacha las peticiones a los microservi
 - 📊 Análisis de logs
 - 🧪 Validación de Helm Charts
 - ⚙️ Generación de pipelines desde texto
+- 🧠 Registro automático de mensajes MCP para trazabilidad (vía `ai-mcp-server`)
 
 ---
 
@@ -23,12 +24,12 @@ Analiza registros CI/CD con LLMs.
 **Payload:**
 ```json
 {
-  "logfile": "logs/build.log",
-  "model": "mistral",
-  "prompt_template": "log_analysis"
+  "log": "contenido del log",
+  "mode": "ollama"
 }
 ```
-→ Redirige internamente al microservicio `ai-log-analyzer`.
+→ Redirige internamente a `ai-log-analyzer`.  
+→ Si hay `prompt_path` y `response_path`, registra mensaje MCP.
 
 ---
 
@@ -39,9 +40,10 @@ Valida un Helm Chart mediante IA.
 **Payload (multipart/form-data):**
 - `chart`: archivo `.tgz` del Helm Chart
 - `mode`: `"ollama"` o `"openai"`
-- `ruleset`: `"default"` (opcional)
+- `strict`: `"true"` o `"false"` (opcional)
 
-→ Redirige a `ai-helm-linter`.
+→ Redirige a `ai-helm-linter`  
+→ MCP registrado automáticamente si se genera respuesta con prompt.
 
 ---
 
@@ -53,10 +55,11 @@ Convierte lenguaje natural en definición de pipeline CI/CD.
 ```json
 {
   "description": "Pipeline con test y despliegue usando Helm",
-  "target": "jenkins"
+  "mode": "ollama"
 }
 ```
-→ Llama a `ai-pipeline-gen`.
+→ Llama a `ai-pipeline-gen`  
+→ MCP registrado automáticamente.
 
 ---
 
@@ -76,9 +79,10 @@ ai-gateway/
 │   ├── analyze_log.py
 │   ├── lint_chart.py
 │   └── generate_pipeline.py
-├── clients/               # Módulo de despacho a microservicios
-│   └── service_dispatcher.py
-├── config.py              # Configuración de rutas, puertos y modelo por defecto
+├── clients/               # Módulos de comunicación
+│   ├── service_dispatcher.py  # Redirección + registro MCP
+│   └── mcp_client.py         # Envío directo al ai-mcp-server
+├── config.py              # Configuración centralizada
 ├── requirements.txt       # Dependencias
 ├── Makefile               # Automatización de despliegue
 ├── Dockerfile             # Imagen de contenedor
@@ -104,7 +108,7 @@ python3 app.py
 def jsonPayload = '''
 {
   "description": "Pipeline básico para test y deploy",
-  "target": "jenkins"
+  "mode": "ollama"
 }
 '''
 
@@ -115,11 +119,12 @@ curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipelin
 
 ---
 
-## 🧠 Inteligencia Adaptativa
+## 🧠 Inteligencia Adaptativa + MCP
 
-- Intenta primero con **Ollama local** (modelo `mistral`)
-- Si falla, redirige a **OpenAI GPT-4o**
-- Configurado dinámicamente en `service_dispatcher.py`
+- Primero intenta con **Ollama local** (modelo `mistral`)
+- Si falla, redirige automáticamente a **OpenAI GPT-4o**
+- Si hay `prompt_path` y `response_path`, se registra un mensaje MCP en `ai-mcp-server`
+- MCP incluye `uuid`, `timestamp`, `tags`, `summary`, etc.
 
 ---
 
