@@ -3,17 +3,24 @@
 from flask import Blueprint, request, jsonify
 from clients.service_dispatcher import dispatch
 
-generate_pipeline_bp = Blueprint('generate_pipeline', __name__)
+bp = Blueprint('generate_pipeline', __name__)
 
-@generate_pipeline_bp.route('/', methods=['POST'])
+@bp.route('/', methods=['POST'])
 def generate_pipeline():
     try:
         data = request.get_json(force=True)
 
-        if 'description' not in data or 'target' not in data:
-            return jsonify({'error': 'Campos "description" y "target" requeridos'}), 400
+        if 'description' not in data:
+            return jsonify({'error': 'Campo "description" requerido'}), 400
 
-        result = dispatch('generate_pipeline', data)
+        mode = data.get("mode", "ollama")
+
+        forwarded_payload = {
+            "description": data["description"],
+            "mode": mode
+        }
+
+        result = dispatch('generate_pipeline', forwarded_payload)
         return jsonify(result)
 
     except Exception as e:
