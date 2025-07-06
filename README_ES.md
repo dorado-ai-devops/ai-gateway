@@ -136,14 +136,6 @@ curl -X POST http://ai-gateway.devops-ai.svc.cluster.local:5000/generate-pipelin
 
 ---
 
-## 🔮 Futuros módulos
-
-- `/explain-error`: análisis de tracebacks
-- `/summarize-pipeline`: resumen de definiciones CI/CD
-- `/compare-logs`: comparación entre logs
-
----
-
 ## 👨‍💻 Autor
 
 **Dani** – [@dorado-ai-devops](https://github.com/dorado-ai-devops)
