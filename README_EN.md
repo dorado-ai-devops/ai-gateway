@@ -142,15 +142,6 @@ On successful LLM dispatch (with `prompt_path` and `response_path`), the gateway
 - Input validation & sanitization in place
 - Structured logging (WIP)
 
----
-
-## 🔮 Planned Modules
-
-- `/explain-error`: traceback analysis
-- `/summarize-pipeline`: CI/CD definition summarizer
-- `/compare-logs`: diffing log sequences
-
----
 
 ## 👨‍💻 Author
 
