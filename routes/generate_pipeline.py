@@ -17,6 +17,7 @@ def generate_pipeline():
         return jsonify({"error": "Falta el campo 'description'"}), 400
 
     mode = payload.get("mode", "ollama")
+    caller = payload.get("caller", "ai-gateway")  # NUEVO: lee 'caller' o usa 'ai-gateway'
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     base_filename = f"pipeline_{ts}"
@@ -41,10 +42,11 @@ def generate_pipeline():
             payload=forwarded_payload,
             prompt_path=prompt_path,
             response_path=response_path,
-            llm_used=mode
+            llm_used=mode,
+            caller=caller  
         )
 
-        # 💾 Guardar resultado en response_path
+        
         os.makedirs(os.path.dirname(response_path), exist_ok=True)
         with open(response_path, "w") as f:
             f.write(result if isinstance(result, str) else str(result))

@@ -6,7 +6,7 @@ from config import SERVICES, TIMEOUT, DEBUG
 from clients.mcp_client import send_mcp_message
 import os
 
-def dispatch(service_name, payload, headers=None, prompt_path=None, response_path=None, llm_used="ollama"):
+def dispatch(service_name, payload, headers=None, prompt_path=None, response_path=None, llm_used="ollama", caller="ai-gateway"):
     """
     Redirige la petición al microservicio correspondiente usando configuración centralizada.
     Además, registra un mensaje MCP si la ejecución es exitosa.
@@ -26,7 +26,6 @@ def dispatch(service_name, payload, headers=None, prompt_path=None, response_pat
                 files = {"chart": f}
                 data = {"mode": payload.get("mode", "ollama")}
                 response = requests.post(url, files=files, data=data, timeout=TIMEOUT)
-
         else:
             response = requests.post(url, json=payload, headers=headers or {}, timeout=TIMEOUT)
 
@@ -38,7 +37,7 @@ def dispatch(service_name, payload, headers=None, prompt_path=None, response_pat
             tags = [service_name, "ai", "pipeline"]
 
             send_mcp_message(
-                source="ai-gateway",
+                source=caller,  
                 microservice=service_name,
                 prompt_path=prompt_path,
                 response_path=response_path,
@@ -58,3 +57,4 @@ def dispatch(service_name, payload, headers=None, prompt_path=None, response_pat
         if DEBUG:
             print(f"[ERROR] {e}")
         raise RuntimeError(f"Fallo inesperado en dispatch: {e}")
+
