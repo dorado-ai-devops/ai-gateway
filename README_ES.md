@@ -15,6 +15,7 @@ Centraliza las llamadas desde Jenkins y despacha las peticiones a los microservi
 
 ---
 
+
 ## 🌐 Endpoints
 
 ### `POST /analyze-log`
