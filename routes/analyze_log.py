@@ -43,7 +43,7 @@ def analyze_log():
             llm_used=mode
         )
 
-        # 💾 Guardar resultado en response_path
+        #  Guardar resultado en response_path
         os.makedirs(os.path.dirname(response_path), exist_ok=True)
         with open(response_path, "w") as f:
             f.write(result if isinstance(result, str) else str(result))

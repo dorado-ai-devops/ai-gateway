@@ -16,13 +16,13 @@ def lint_chart():
     mode = request.form.get("mode", "ollama")
     chart_name = request.form.get("chart_name", "unknown")
 
-    # 🕒 Timestamp único con zona horaria UTC
+    #  Timestamp único con zona horaria UTC
     ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     base_filename = f"chart_{ts}"
     save_dir = "/app/outputs/charts"
     os.makedirs(save_dir, exist_ok=True)
 
-    # ⚠️ Guardar .tgz temporal para procesar
+    # ️ Guardar .tgz temporal para procesar
     with tempfile.NamedTemporaryFile(delete=False, suffix=".tgz") as tmp:
         chart_file.save(tmp.name)
         chart_path = tmp.name
@@ -30,7 +30,7 @@ def lint_chart():
     prompt_path = os.path.join(save_dir, f"{base_filename}.path.json")
     response_path = os.path.join(save_dir, f"{base_filename}.lint")
 
-    # 📝 Guardar metadata como .json
+    #  Guardar metadata como .json
     try:
         metadata = {
             "chart_name": chart_name,
@@ -70,7 +70,7 @@ def lint_chart():
         }), 502
 
     finally:
-        # 🧹 Eliminar el .tgz temporal
+        #  Eliminar el .tgz temporal
         try:
             os.remove(chart_path)
         except Exception:
