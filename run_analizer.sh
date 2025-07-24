@@ -10,7 +10,7 @@ fi
 
 LOG_CONTENT=$(cat "$LOG_FILE" | sed 's/"/\\"/g')
 
-echo "📡 Enviando log a ai-gateway (modo: $MODE)"
+echo " Enviando log a ai-gateway (modo: $MODE)"
 
 curl -X POST http://localhost:5002/analyze-log \
   -H "Content-Type: application/json" \
